@@ -52,10 +52,14 @@ chown -R "${DEPLOY_USER}:www-data" "${DEPLOY_PATH}"
 chmod -R g+rwX "${DEPLOY_PATH}"
 
 echo "==> Скрипт перезагрузки сервисов (запускается через sudo без пароля)"
+# Владелец файлов сайта остаётся deploy (иначе следующий деплой не сможет
+# перезаписать файлы), группа www-data только для чтения веб-сервером.
 cat > /usr/local/sbin/vvger-reload-services.sh <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-chown -R www-data:www-data "${DEPLOY_PATH}"
+chown -R ${DEPLOY_USER}:www-data "${DEPLOY_PATH}"
+find "${DEPLOY_PATH}" -type d -exec chmod 750 {} +
+find "${DEPLOY_PATH}" -type f -exec chmod 640 {} +
 systemctl reload php*-fpm 2>/dev/null || true
 systemctl reload nginx
 EOF
