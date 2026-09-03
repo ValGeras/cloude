@@ -32,8 +32,12 @@ if [[ -z "${DEPLOY_PUBLIC_KEY}" ]]; then
 fi
 
 echo "==> Создание пользователя ${DEPLOY_USER}"
+# Шелл должен быть настоящим (bash), а не /usr/sbin/nologin — иначе sshd не
+# сможет выполнить команду rsync/ssh при неинтерактивном подключении из CI.
 if ! id "${DEPLOY_USER}" >/dev/null 2>&1; then
-  useradd --create-home --shell /usr/sbin/nologin "${DEPLOY_USER}"
+  useradd --create-home --shell /bin/bash "${DEPLOY_USER}"
+else
+  usermod --shell /bin/bash "${DEPLOY_USER}"
 fi
 
 mkdir -p "/home/${DEPLOY_USER}/.ssh"
