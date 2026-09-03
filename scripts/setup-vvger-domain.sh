@@ -52,7 +52,7 @@ if [[ -n "${SERVER_IP}" && -n "${DOMAIN_IP}" && "${SERVER_IP}" != "${DOMAIN_IP}"
   echo "Продолжаю настройку Nginx, но certbot не сможет выпустить сертификат, пока DNS не обновится." >&2
 fi
 
-PACKAGES=(nginx certbot python3-certbot-nginx ufw dnsutils curl)
+PACKAGES=(nginx certbot python3-certbot-nginx ufw dnsutils curl rsync)
 if [[ "${ENABLE_PHP}" == "true" && -z "${APP_PORT}" ]]; then
   PACKAGES+=(php-fpm php-mysql php-mbstring php-xml php-curl php-zip php-gd php-bcmath)
 fi
