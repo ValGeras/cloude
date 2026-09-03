@@ -66,3 +66,40 @@ sudo DOMAIN=vvger.ru EMAIL=you@example.com ENABLE_PHP=false ENABLE_MYSQL=false \
 ```
 
 После успешного запуска сайт будет доступен по адресу `https://vvger.ru`.
+
+## Автодеплой из этого репозитория (GitHub Actions)
+
+Workflow `.github/workflows/deploy.yml` при каждом push в ветку `main` (или
+вручную через "Run workflow") копирует содержимое репозитория на сервер в
+`DEPLOY_PATH` (через `rsync` по SSH), устанавливает зависимости из
+`composer.json` (если он есть), и перезагружает `nginx`/`php-fpm`.
+
+### Настройка (один раз)
+
+1. Сгенерируйте отдельную SSH-пару для CI:
+   ```bash
+   ssh-keygen -t ed25519 -f deploy_key -N "" -C "github-actions@vvger"
+   ```
+2. На сервере (от root) запустите подготовку пользователя `deploy`, передав
+   публичный ключ:
+   ```bash
+   sudo DEPLOY_PATH=/var/www/vvger.ru \
+        DEPLOY_PUBLIC_KEY="$(cat deploy_key.pub)" \
+        ./scripts/prepare-deploy-user.sh
+   ```
+   Скрипт создаёт пользователя `deploy` без пароля/shell-логина, права на
+   каталог сайта и узкий sudo (только перезапуск nginx/php-fpm) — без
+   полного root-доступа для CI.
+3. В настройках репозитория на GitHub (Settings → Secrets and variables →
+   Actions) добавьте секреты:
+   - `DEPLOY_HOST` — IP или домен сервера
+   - `DEPLOY_USER` — `deploy`
+   - `DEPLOY_PATH` — `/var/www/vvger.ru`
+   - `DEPLOY_SSH_KEY` — содержимое приватного файла `deploy_key`
+   - `DEPLOY_PORT` — порт SSH, если отличается от `22` (необязательно)
+4. Замените ветку в `.github/workflows/deploy.yml` (`branches: [main]`) на
+   вашу основную ветку, если она называется иначе, и запушьте — деплой
+   запустится автоматически.
+
+Каталоги `.git`, `.github`, `scripts` и файл `README.md` на сервер не
+копируются — деплоится только содержимое сайта.
